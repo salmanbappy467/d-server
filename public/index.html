@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MeterNet Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #0b1120; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; color: #fff; }
+        .container { background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        /* Login UI */
+        #login-section h2 { text-align: center; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff; text-align: center; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        
+        /* Automatic Page List UI */
+        #menu-section { display: none; }
+        .page-list { list-style: none; padding: 0; margin-top: 20px; }
+        .page-item { background: #0f172a; margin-bottom: 10px; border-radius: 6px; border: 1px solid #334155; transition: 0.2s; }
+        .page-item:hover { border-color: #3b82f6; background: #1e293b; }
+        .page-link { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: #f1f5f9; text-decoration: none; font-size: 14px; font-weight: 600; }
+        .page-link i { color: #3b82f6; width: 20px; text-align: center; }
+        .logout-btn { margin-top: 20px; background: #ef4444; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="login-section">
+            <h2>⚡ MeterNet</h2>
+            <input type="password" id="pass" placeholder="Enter Admin Password" onkeypress="if(event.key==='Enter') login()">
+            <button class="btn" onclick="login()">Unlock System</button>
+        </div>
+
+        <div id="menu-section">
+            <h3 style="margin:0; font-size:18px;"><i class="fas fa-folder-open"></i> Protected Pages</h3>
+            <p style="font-size:12px; color:#94a3b8;">Select a module to continue</p>
+            <ul class="page-list" id="pageList">
+                </ul>
+            <button class="btn logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const password = document.getElementById('pass').value;
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+
+            if (res.ok) {
+                showMenu();
+            } else {
+                alert("Wrong Password!");
+            }
+        }
+
+        async function showMenu() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('menu-section').style.display = 'block';
+
+            // সার্ভার থেকে ফাইলের তালিকা আনা
+            const res = await fetch('/api/admin/pages');
+            const pages = await res.json();
+            const list = document.getElementById('pageList');
+            list.innerHTML = '';
+
+            pages.forEach(page => {
+                const li = document.createElement('li');
+                li.className = 'page-item';
+                li.innerHTML = `
+                    <a href="${page.url}" class="page-link">
+                        <i class="fas fa-file-code"></i>
+                        <span>${page.name}</span>
+                    </a>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function logout() {
+            document.cookie = "admin_access=; Max-Age=0; path=/;";
+            location.reload();
+        }
+
+        // চেক করা আগে থেকেই লগইন আছে কিনা
+        if (document.cookie.includes('admin_access=true')) {
+            showMenu();
+        }
+    </script>
+</body>
+</html>

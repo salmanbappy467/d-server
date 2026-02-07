@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeterNet - REB/PBS Script Documentation</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e293b;
+            --accent: #0f172a;
+            --bg: #f8fafc;
+            --text: #334155;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); display: flex; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--secondary); color: white; height: 100vh; position: fixed; padding: 20px; overflow-y: auto; }
+        .sidebar h2 { font-size: 20px; margin-bottom: 20px; color: #60a5fa; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .sidebar ul { list-style: none; }
+        .sidebar li { margin-bottom: 10px; }
+        .sidebar a { text-decoration: none; color: #cbd5e1; display: block; padding: 8px 12px; border-radius: 6px; transition: 0.3s; }
+        .sidebar a:hover, .sidebar a.active { background: #334155; color: white; border-left: 4px solid var(--primary); }
+
+        /* Main Content */
+        .content { margin-left: 260px; padding: 40px; width: 100%; max-width: 1000px; }
+        h1 { font-size: 32px; color: var(--accent); margin-bottom: 10px; }
+        h3 { font-size: 24px; color: var(--primary); margin-top: 40px; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        p { line-height: 1.6; margin-bottom: 15px; }
+        
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; }
+        .get { background: #10b981; }
+        .post { background: #f59e0b; }
+        
+        /* Code Blocks */
+        pre { background: var(--code-bg); color: var(--code-text); padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Consolas', 'Monaco', monospace; margin-bottom: 20px; border: 1px solid #334155; position: relative; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: #334155; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 12px; }
+        .copy-btn:hover { background: var(--primary); }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; font-weight: 600; color: var(--accent); }
+        tr:hover { background: #f8fafc; }
+
+        .param { font-weight: bold; color: var(--primary); }
+        .type { color: #64748b; font-size: 14px; font-family: monospace; }
+        .req { color: #ef4444; font-size: 12px; font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>⚡ rebpbs.js Docs</h2>
+        <ul>
+            <li><a href="#intro">পরিচিতি (Introduction)</a></li>
+            <li><a href="#setup">কিভাবে কল করবেন?</a></li>
+            <li><a href="#login">১. লগইন চেক (Check)</a></li>
+            <li><a href="#inventory">২. ইনভেন্টরি লিস্ট (List)</a></li>
+            <li><a href="#batch">৩. মিটার পোস্টিং (Batch)</a></li>
+            <li><a href="#fast">৪. ফাস্ট পোস্টিং (Fast)</a></li>
+            <li><a href="#errors">টাস্ক ফেইল ও সমাধান</a></li>
+        </ul>
+    </div>
+
+    <div class="content">
+        
+        <section id="intro">
+            <h1>MeterNet Automation Script: rebpbs.js</h1>
+            <p>এই স্ক্রিপ্টটি <strong>MeterNet Distributed System</strong> এর একটি প্লাগিন। এটি REB/PBS এর ওয়েবসাইট অটোমেশনের কাজ করে। এর মাধ্যমে আপনি লগইন চেক, মিটার পোস্টিং এবং ইনভেন্টরি চেক করতে পারবেন।</p>
+            <p>ভার্সন: <strong>2.1.0 (Stable)</strong> | আপডেট: <strong>ফেব্রুয়ারি ২০২৬</strong></p>
+        </section>
+
+        <section id="setup">
+            <h3>🔗 API Endpoint</h3>
+            <p>যেকোনো অ্যাকশন পারফর্ম করার জন্য নিচের লিংকে POST রিকোয়েস্ট পাঠাতে হবে।</p>
+            <pre>POST /app/rebpbs</pre>
+            
+            <p><strong>Headers:</strong></p>
+            <pre>Content-Type: application/json</pre>
+        </section>
+
+        <section id="login">
+            <h3>🔐 ১. লগইন চেক (Action: CHECK)</h3>
+            <p>এই অ্যাকশনটি ব্যবহার করে ইউজার আইডি এবং পাসওয়ার্ড সঠিক কিনা যাচাই করা হয়। এটি সফল হলে ইউজারের নাম, পিবিএস (PBS) এর নাম এবং জোনাল অফিসের নাম রিটার্ন করে।</p>
+
+            <h4>Request Payload:</h4>
+            <table>
+                <tr>
+                    <th>প্যারামিটার</th>
+                    <th>টাইপ</th>
+                    <th>বিবরণ</th>
+                </tr>
+                <tr>
+                    <td class="param">action</td>
+                    <td class="type">String</td>
+                    <td><code>CHECK</code>, <code>LOGIN</code>, বা <code>VERIFY</code> <span class="req">(বাধ্যতামূলক)</span></td>
+                </tr>
+                <tr>
+                    <td class="param">userid</td>
+                    <td class="type">String</td>
+                    <td>PBS ইউজার নেম <span class="req">(বাধ্যতামূলক)</span></td>
+                </tr>
+                <tr>
+                    <td class="param">password</td>
+                    <td class="type">String</td>
+                    <td>পাসওয়ার্ড <span class="req">(বাধ্যতামূলক)</span></td>
+                </tr>
+            </table>
+
+            <h4>Example Request:</h4>
+<pre>
+{
+    "action": "CHECK",
+    "userid": "dhaka_pbs_1",
+    "password": "MySecretPassword123"
+}
+</pre>
+
+            <h4>Success Response:</h4>
+<pre>
+{
+    "success": true,
+    "userInfo": "Md. Rahim (AGM)",
+    "pbs": "Dhaka PBS-1",
+    "zonal": "Savar Zonal Office",
+    "cookies": ["ASP.NET_SessionId=...", "auth=..."]
+}
+</pre>
+        </section>
+
+        <section id="inventory">
+            <h3>📋 ২. ইনভেন্টরি লিস্ট (Action: LIST)</h3>
+            <p>PBS এর স্টোর বা টেস্টিং এ থাকা মিটারের তালিকা দেখার জন্য এটি ব্যবহার করা হয়।</p>
+
+            <h4>Request Payload:</h4>
+            <table>
+                <tr>
+                    <th>প্যারামিটার</th>
+                    <th>টাইপ</th>
+                    <th>বিবরণ</th>
+                </tr>
+                <tr>
+                    <td class="param">action</td>
+                    <td class="type">String</td>
+                    <td><code>LIST</code>, <code>INVENTORY</code>, বা <code>GETINVENTORYLIST</code></td>
+                </tr>
+                <tr>
+                    <td class="param">limit</td>
+                    <td class="type">Number</td>
+                    <td>কতগুলো ডাটা দেখতে চান (যেমন: 50, 100)। ডিফল্ট: 50</td>
+                </tr>
+            </table>
+
+            <h4>Example Request:</h4>
+<pre>
+{
+    "action": "LIST",
+    "userid": "dhaka_pbs_1",
+    "password": "MySecretPassword123",
+    "limit": 10
+}
+</pre>
+
+            <h4>Success Response:</h4>
+<pre>
+{
+    "count": 2,
+    "data": [
+        {
+            "brand": "Hexing",
+            "meterNo": "12345678",
+            "status": "In Store",
+            "cmo": "N/A",
+            "date": "05-Feb-2026"
+        },
+        {
+            "brand": "Inhemeter",
+            "meterNo": "87654321",
+            "status": "Testing",
+            "cmo": "CMO-123",
+            "date": "06-Feb-2026"
+        }
+    ]
+}
+</pre>
+        </section>
+
+        <section id="batch">
+            <h3>📦 ৩. ব্যাচ মিটার পোস্টিং (Action: POST)</h3>
+            <p>এটি ব্যবহার করে একাধিক মিটার নিরাপদে (একটার পর একটা) আপলোড করা যায়। সার্ভার বিজি থাকলে এটি ব্যবহার করা নিরাপদ।</p>
+
+            <h4>Meter Object Structure (meters অ্যারের প্রতিটি আইটেম):</h4>
+            <table>
+                <tr>
+                    <th>প্যারামিটার</th>
+                    <th>ডিফল্ট</th>
+                    <th>বিবরণ</th>
+                </tr>
+                <tr>
+                    <td class="param">meterNo</td>
+                    <td>-</td>
+                    <td>মিটার নাম্বার <span class="req">(বাধ্যতামূলক)</span></td>
+                </tr>
+                <tr>
+                    <td class="param">sealNo</td>
+                    <td>-</td>
+                    <td>সিল নাম্বার <span class="req">(বাধ্যতামূলক)</span></td>
+                </tr>
+                <tr>
+                    <td class="param">phase</td>
+                    <td>'1'</td>
+                    <td>ফেজ (1 or 3)</td>
+                </tr>
+                <tr>
+                    <td class="param">volt</td>
+                    <td>'240'</td>
+                    <td>ভোল্টেজ</td>
+                </tr>
+                <tr>
+                    <td class="param">manufacturerId</td>
+                    <td>'581'</td>
+                    <td>ব্র্যান্ড আইডি</td>
+                </tr>
+            </table>
+
+            <h4>Example Request:</h4>
+<pre>
+{
+    "action": "POST",
+    "userid": "dhaka_pbs_1",
+    "password": "pass",
+    "meters": [
+        { "meterNo": "111111", "sealNo": "S-01" },
+        { "meterNo": "222222", "sealNo": "S-02", "phase": "3", "volt": "440" }
+    ]
+}
+</pre>
+
+            <h4>Success Response:</h4>
+<pre>
+{
+    "status": "completed",
+    "count": 2,
+    "failed": 0,
+    "data": [
+        { "meterNo": "111111", "status": "SUCCESS", "reason": "Saved Successfully" },
+        { "meterNo": "222222", "status": "FAILED", "reason": "Duplicate Meter" }
+    ]
+}
+</pre>
+        </section>
+
+        <section id="fast">
+            <h3>🚀 ৪. ফাস্ট পোস্টিং (Action: FAST)</h3>
+            <p>এটি <code>POST</code> এর মতোই কাজ করে, তবে অনেক দ্রুত (Concurrent)। এটি একসাথে ৫টি করে মিটার সার্ভারে পাঠায়। নেটওয়ার্ক ভালো থাকলে এটি ব্যবহার করুন।</p>
+
+            <h4>Example Request:</h4>
+<pre>
+{
+    "action": "FAST",  <-- অথবা "CONCURRENT"
+    "userid": "dhaka_pbs_1",
+    "password": "pass",
+    "meters": [ ... অনেকগুলো মিটার ... ]
+}
+</pre>
+            <p><strong>পার্থক্য:</strong> সাধারণ POST এ ১০০ মিটার আপলোড করতে সময় লাগে ২০০ সেকেন্ড, FAST মোডে লাগে মাত্র ৪০-৫০ সেকেন্ড।</p>
+        </section>
+
+        <section id="errors">
+            <h3>⚠️ সাধারণ সমস্যা ও সমাধান</h3>
+            <ul>
+                <li><strong>Login Failed / Dashboard not accessible:</strong> ইউজার নেম বা পাসওয়ার্ড ভুল হলে অথবা REB এর সার্ভার ডাউন থাকলে এই এরর আসে।</li>
+                <li><strong>Session Expired:</strong> একটানা অনেকক্ষণ কাজ করলে কুকি এক্সপায়ার হতে পারে। স্ক্রিপ্ট অটোমেটিক আবার লগইন করার চেষ্টা করবে না, আপনাকে নতুন রিকোয়েস্ট পাঠাতে হবে।</li>
+                <li><strong>Table not found (Inventory):</strong> যদি ইনভেন্টরি পেজে কোনো ডাটা না থাকে, তবে খালি লিস্ট <code>[]</code> রিটার্ন আসবে।</li>
+                <li><strong>Unknown Action:</strong> যদি আপনি <code>action</code> প্যারামিটারে ভুল বানান লেখেন। সাপোর্টেড অ্যাকশনগুলো হলো: <code>CHECK, LIST, POST, FAST</code>।</li>
+            </ul>
+        </section>
+
+        <footer style="margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; text-align: center; color: #888;">
+            <p>&copy; 2026 MeterNet Automation System | Developed by Salman Bappy</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // Simple script to handle copying code blocks
+        document.querySelectorAll('pre').forEach(pre => {
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.innerText = 'Copy';
+            btn.onclick = () => {
+                const code = pre.innerText.replace('Copy', '');
+                navigator.clipboard.writeText(code);
+                btn.innerText = 'Copied!';
+                setTimeout(() => btn.innerText = 'Copy', 2000);
+            };
+            pre.appendChild(btn);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeterNet - Script Development Guide</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --bg: #f8fafc;
+            --text: #334155;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        
+        .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        
+        /* Header */
+        header { text-align: center; margin-bottom: 50px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
+        h1 { font-size: 36px; color: var(--primary); margin-bottom: 10px; }
+        p.subtitle { color: #64748b; font-size: 18px; }
+
+        /* Sections */
+        section { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        h2 { font-size: 24px; color: var(--primary); margin-bottom: 20px; border-left: 5px solid var(--accent); padding-left: 15px; }
+        h3 { font-size: 18px; color: var(--text); margin-top: 25px; margin-bottom: 10px; font-weight: 700; }
+        ul { list-style-position: inside; margin-bottom: 20px; }
+        li { margin-bottom: 8px; }
+
+        /* Code Blocks */
+        pre { background: var(--code-bg); color: var(--code-text); padding: 20px; border-radius: 8px; overflow-x: auto; font-family: 'Consolas', 'Monaco', monospace; margin: 15px 0; position: relative; }
+        .tag { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; margin-right: 5px; }
+        .tag.req { background: var(--warning); }
+        .tag.good { background: var(--success); }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        th { background: #f1f5f9; color: var(--primary); }
+
+        /* Buttons */
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.1); color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 12px; transition: 0.2s; }
+        .copy-btn:hover { background: var(--accent); }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🛠️ স্ক্রিপ্ট ডেভেলপমেন্ট গাইড</h1>
+            <p class="subtitle">MeterNet সিস্টেমের জন্য নতুন অটোমেশন স্ক্রিপ্ট তৈরির নিয়মাবলী ও পদ্ধতি</p>
+        </header>
+
+        <section>
+            <h2>১. স্ক্রিপ্ট কী এবং কেন?</h2>
+            <p>MeterNet সিস্টেমে প্রতিটি কাজ (যেমন: লগইন চেক, মিটার পোস্টিং) একটি করে আলাদা <code>.js</code> ফাইল দ্বারা নিয়ন্ত্রিত হয়। এই ফাইলগুলোকে আমরা "স্ক্রিপ্ট" বা "প্লাগিন" বলি। আপনি সার্ভারে একটি নতুন স্ক্রিপ্ট আপলোড করলেই সমস্ত ওয়ার্কার পিসি সেটি অটোমেটিক ডাউনলোড করে কাজ শুরু করতে পারে।</p>
+        </section>
+
+        <section>
+            <h2>২. তৈরির শর্তাবলী (Conditions)</h2>
+            <p>একটি স্ক্রিপ্ট সঠিকভাবে কাজ করার জন্য নিচের শর্তগুলো মানতে হবে:</p>
+            <ul>
+                <li>✅ ফাইলের এক্সটেনশন অবশ্যই <code>.js</code> হতে হবে (যেমন: <code>billing.js</code>)।</li>
+                <li>✅ স্ক্রিপ্টটি একটি <strong>Node.js Module</strong> হিসেবে লিখতে হবে।</li>
+                <li>✅ অবশ্যই <code>module.exports</code> ব্যবহার করতে হবে।</li>
+                <li>✅ ফাংশনগুলো <code>async</code> (অ্যাসিঙ্ক্রোনাস) হতে হবে যাতে সার্ভার রেসপন্সের জন্য অপেক্ষা করতে পারে।</li>
+                <li>✅ ওয়ার্কারে ইনস্টল নেই এমন কোনো প্যাকেজ (Dependency) ব্যবহার করা যাবে না। (যেমন: <code>axios</code>, <code>cheerio</code>, <code>fs</code> এগুলো ব্যবহার করা যাবে)।</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>৩. লেখার পদ্ধতি (Methodology)</h2>
+            <p>MeterNet সিস্টেমটি অত্যন্ত ফ্লেক্সিবল। আপনি দুইভাবে স্ক্রিপ্ট লিখতে পারেন:</p>
+
+            <h3>পদ্ধতি ১: Direct Function Export (সবচেয়ে সহজ)</h3>
+            <p>সরাসরি ফাংশনের নাম এক্সপোর্ট করুন। API কল করার সময় <code>action</code> প্যারামিটারে সেই নাম দিলেই কাজ করবে।</p>
+            <pre>
+// billing.js
+module.exports.checkBill = async (payload) => {
+    return { status: "Paid", amount: 500 };
+};
+// API Call: { "action": "checkBill" }
+</pre>
+
+            <h3>পদ্ধতি ২: The `run` Function (স্ট্যান্ডার্ড)</h3>
+            <p>একটি মেইন <code>run</code> ফাংশন এক্সপোর্ট করুন যা রাউটার হিসেবে কাজ করবে। এটি জটিল লজিকের জন্য ভালো।</p>
+            <pre>
+// billing.js
+async function run(payload) {
+    if (payload.action === 'PAY') return payBill(payload);
+    if (payload.action === 'CHECK') return checkBill(payload);
+}
+module.exports = { run };
+</pre>
+        </section>
+
+        <section>
+            <h2>৪. সম্পূর্ণ উদাহরণ (Template)</h2>
+            <p>নিচে একটি আদর্শ স্ক্রিপ্টের টেম্পলেট দেওয়া হলো যা কপি করে আপনি ব্যবহার করতে পারেন।</p>
+            <span class="tag good">Template</span> <strong>filename: myScript.js</strong>
+
+            <pre>
+const axios = require('axios'); // প্রয়োজনে লাইব্রেরি ইমপোর্ট করুন
+
+// ১. হেল্পার ফাংশন (লজিক এখানে লিখুন)
+async function performTask(data) {
+    console.log("Processing data:", data);
+    // এখানে আপনার অটোমেশন কোড থাকবে...
+    await new Promise(r => setTimeout(r, 1000)); // ডামি ডিলে
+    return { success: true, message: "Task Done!" };
+}
+
+// ২. সরাসরি এক্সপোর্ট (Direct Call এর জন্য)
+async function specialAction(payload) {
+    return { msg: "Special action executed directly!" };
+}
+
+// ৩. মেইন রান ফাংশন (Router)
+async function run(payload) {
+    // অ্যাকশন নেম আপারকেস করে নিন যাতে বানান ভুল হলেও সমস্যা না হয়
+    const action = payload.action ? payload.action.toUpperCase() : 'DEFAULT';
+
+    console.log(`▶ Running Action: ${action}`);
+
+    switch (action) {
+        case 'DO_TASK':
+        case 'TASK':
+            return await performTask(payload);
+        
+        case 'SPECIAL':
+            return await specialAction(payload);
+
+        default:
+            return { error: `Unknown Action: ${action}` };
+    }
+}
+
+// ৪. এক্সপোর্ট (অবশ্যই run এবং অন্যান্য ফাংশন এক্সপোর্ট করতে হবে)
+module.exports = {
+    run,
+    performTask,
+    specialAction
+};
+</pre>
+        </section>
+
+        <section>
+            <h2>৫. কিভাবে টেস্ট করবেন?</h2>
+            <p>স্ক্রিপ্ট লেখা শেষ হলে নিচের ধাপে এটি সার্ভারে আপলোড ও টেস্ট করুন:</p>
+            <ol>
+                <li>আপনার স্ক্রিপ্ট ফাইলটি (যেমন: <code>myScript.js</code>) সার্ভারের <code>/scripts</code> ফোল্ডারে রাখুন।</li>
+                <li>অথবা GitHub এ আপলোড করে ড্যাশবোর্ড থেকে <strong>"Sync Github"</strong> বাটনে ক্লিক করুন।</li>
+                <li>API কল করুন (Postman বা Dashboard থেকে):</li>
+            </ol>
+            <pre>
+POST /app/myScript
+Content-Type: application/json
+
+{
+    "action": "TASK",
+    "someData": "Hello World"
+}
+</pre>
+        </section>
+
+    </div>
+
+    <script>
+        // Copy Code Feature
+        document.querySelectorAll('pre').forEach(pre => {
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.innerText = 'Copy';
+            btn.onclick = () => {
+                const code = pre.innerText;
+                navigator.clipboard.writeText(code);
+                btn.innerText = 'Copied!';
+                setTimeout(() => btn.innerText = 'Copy', 2000);
+            };
+            pre.appendChild(btn);
+        });
+    </script>
+</body>
+</html>
