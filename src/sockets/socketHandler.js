@@ -121,14 +121,16 @@ socket.on('get_scripts_manifest', () => {
 });
 
 // 🔥 স্পেসিফিক ফাইল রিকোয়েস্ট হ্যান্ডলিং (নতুন যোগ করুন)
+// সার্ভার সাইড কোড (যদি আপনি পরিবর্তন করতে পারেন)
 socket.on('request_file', (fileName) => {
-    // সিকিউরিটি চেক: শুধু ফাইলনেম এলাউড, পাথ ট্রাভার্সাল (../) নিষিদ্ধ
     const safeName = path.basename(fileName);
     const filePath = path.join(__dirname, '../../scripts', safeName);
     
     if (fs.existsSync(filePath)) {
-        const content = fs.readFileSync(filePath);
-        socket.emit('receive_file', { name: safeName, content });
+        const content = fs.readFileSync(filePath, 'utf8'); 
+        socket.emit('file_data', { fileName: safeName, content });
+    } else {
+        console.log(`File not found: ${safeName}`);
     }
 });
 
