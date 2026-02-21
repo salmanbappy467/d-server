@@ -139,4 +139,10 @@ socket.on('request_file', (fileName) => {
         console.log(`File not found: ${safeName}`);
     }
 });
+            } catch (e) {
+            console.error("Socket Error:", e.message);
+            socket.disconnect();
+        }
+    });
+};
 
