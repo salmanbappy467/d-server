@@ -120,23 +120,23 @@ socket.on('get_scripts_manifest', () => {
     socket.emit('scripts_manifest', manifest);
 });
 
-// 🔥 স্পেসিফিক ফাইল রিকোয়েস্ট হ্যান্ডলিং (নতুন যোগ করুন)
-// সার্ভার সাইড কোড (যদি আপনি পরিবর্তন করতে পারেন)
+
+// 🔥 স্পেসিফিক ফাইল রিকোয়েস্ট হ্যান্ডলিং (সার্ভার সাইড ফিক্স)
 socket.on('request_file', (fileName) => {
     const safeName = path.basename(fileName);
     const filePath = path.join(__dirname, '../../scripts', safeName);
     
     if (fs.existsSync(filePath)) {
         const content = fs.readFileSync(filePath, 'utf8'); 
+        
+        // ১. আপনার পুরানো Node.js স্ক্রিপ্ট (index.js) এর জন্য
         socket.emit('file_data', { fileName: safeName, content });
+        
+        // ২. আপনার ডেস্কটপ/পিসি অ্যাপ (worker.js) এর জন্য
+        socket.emit('receive_file', { name: safeName, content });
+        
     } else {
         console.log(`File not found: ${safeName}`);
     }
 });
 
-        } catch (e) {
-            console.error("Socket Error:", e.message);
-            socket.disconnect();
-        }
-    });
-};
